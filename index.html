@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDGAR Financial Terminal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#090c10',
+                        cardBg: '#0d1117',
+                        cardHeader: '#161b22',
+                        borderCol: '#21262d',
+                        accentBlue: '#388bfd',
+                        accentGreen: '#238636',
+                        accentRed: '#da3633',
+                        textMuted: '#8b949e'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090c10;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #21262d;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #388bfd;
+        }
+    </style>
+</head>
+<body class="bg-darkBg text-slate-100 font-sans antialiased h-screen flex flex-col overflow-hidden">
+
+    <!-- TOP HEADER & ASSET FILTER STRIP -->
+    <header class="bg-cardBg border-b border-borderCol px-4 py-2 flex flex-col space-y-2 shrink-0">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="font-extrabold text-accentBlue tracking-wider text-base uppercase flex items-center space-x-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    <span>EDGAR TERMINAL <span class="text-xs font-normal text-textMuted">v4.0 SEC-STRETCH-CHART</span></span>
+                </span>
+            </div>
+
+            <!-- Ticker Asset Selector -->
+            <div class="flex items-center space-x-1 text-xs" id="assetSelectorGroup">
+                <button onclick="selectAsset('ALL')" id="asset-btn-ALL" class="asset-btn bg-accentBlue text-white font-bold px-3 py-1 rounded">ALL (9)</button>
+                <button onclick="selectAsset('TSLA')" id="asset-btn-TSLA" class="asset-btn bg-darkBg hover:bg-borderCol text-textMuted px-2.5 py-1 rounded border border-borderCol">TSLA</button>
+                <button onclick="selectAsset('HIMS')" id="asset-btn-HIMS" class="asset-btn bg-darkBg hover:bg-borderCol text-textMuted px-2.5 py-1 rounded border border-borderCol">HIMS</button>
+                <button onclick="selectAsset('BB')" id="asset-btn-BB" class="asset-btn bg-darkBg hover:bg-borderCol text-textMuted px-2.5 py-1 rounded border border-borderCol">BB</button>
+                <button onclick="selectAsset('CRWV')" id="asset-btn-CRWV" class="asset-btn bg-darkBg hover:bg-borderCol text-textMuted px-2.5 py-1 rounded border border-borderCol">CRWV</button>
+                <button onclick="selectAsset('RKLB')" id="asset-btn-RKLB" class="asset-btn bg-darkBg hover:bg-borderCol text-textMuted px-2.5 py-1 rounded border border-borderCol">RKLB</button>
+                <button onclick="selectAsset('AMD')" id="asset-btn-AMD" class="asset-btn bg-darkBg hover:bg-borderCol text-textMuted px-2.5 py-1 rounded border border-borderCol">AMD</button>
+                <button onclick="selectAsset('NEBIUS')" id="asset-btn-NEBIUS" class="asset-btn bg-darkBg hover:bg-borderCol text-textMuted px-2.5 py-1 rounded border border-borderCol">NEBIUS</button>
+                <button onclick="selectAsset('BTC')" id="asset-btn-BTC" class="asset-btn bg-darkBg hover:bg-borderCol text-textMuted px-2.5 py-1 rounded border border-borderCol">BTC</button>
+                <button onclick="selectAsset('XYZ100')" id="asset-btn-XYZ100" class="asset-btn bg-darkBg hover:bg-borderCol text-textMuted px-2.5 py-1 rounded border border-borderCol">XYZ100</button>
+            </div>
+
+            <div class="flex items-center space-x-3 text-xs">
+                <span class="text-accentGreen flex items-center space-x-1">● <span>SEC EDGAR ONLINE</span></span>
+                <button onclick="location.reload()" class="bg-darkBg hover:bg-borderCol text-slate-300 border border-borderCol px-2.5 py-1 rounded flex items-center space-x-1">↻ Refresh</button>
+            </div>
+        </div>
+
+        <!-- Real-Time Ticker Bar -->
+        <div class="flex items-center space-x-4 overflow-x-auto py-1 text-xs border-t border-borderCol/40 pt-1.5">
+            <div class="flex items-center space-x-1.5"><span class="font-bold text-white">TSLA</span><span class="text-slate-200">$218.40</span><span class="text-accentGreen">+3.42%</span><span class="text-textMuted text-[10px]">MCap: $695.2B</span></div>
+            <div class="flex items-center space-x-1.5"><span class="font-bold text-white">HIMS</span><span class="text-slate-200">$18.95</span><span class="text-accentGreen">+8.14%</span><span class="text-textMuted text-[10px]">MCap: $4.12B</span></div>
+            <div class="flex items-center space-x-1.5"><span class="font-bold text-white">BB</span><span class="text-slate-200">$2.84</span><span class="text-accentRed">-1.12%</span><span class="text-textMuted text-[10px]">MCap: $1.68B</span></div>
+            <div class="flex items-center space-x-1.5"><span class="font-bold text-white">CRWV</span><span class="text-slate-200">$84.50</span><span class="text-accentGreen">+14.20%</span><span class="text-textMuted text-[10px]">MCap: $23.5B</span></div>
+            <div class="flex items-center space-x-1.5"><span class="font-bold text-white">RKLB</span><span class="text-slate-200">$9.62</span><span class="text-accentGreen">+5.35%</span><span class="text-textMuted text-[10px]">MCap: $4.78B</span></div>
+            <div class="flex items-center space-x-1.5"><span class="font-bold text-white">AMD</span><span class="text-slate-200">$156.40</span><span class="text-accentRed">-0.85%</span><span class="text-textMuted text-[10px]">MCap: $252.8B</span></div>
+            <div class="flex items-center space-x-1.5"><span class="font-bold text-white">NEBIUS</span><span class="text-slate-200">$22.10</span><span class="text-accentGreen">+6.80%</span><span class="text-textMuted text-[10px]">MCap: $4.85B</span></div>
+            <div class="flex items-center space-x-1.5"><span class="font-bold text-white">BTC</span><span class="text-slate-200">$67,820</span><span class="text-accentGreen">+2.15%</span></div>
+            <div class="flex items-center space-x-1.5"><span class="font-bold text-white">XYZ100</span><span class="text-slate-200">20,140</span><span class="text-accentGreen">+0.40%</span></div>
+        </div>
+    </header>
+
+    <!-- MAIN DASHBOARD BODY (3 PANELS) -->
+    <div class="flex-1 grid grid-cols-12 gap-2 p-2 overflow-hidden">
+
+        <!-- PANEL 1: SEC EDGAR FILINGS STREAM (LEFT) -->
+        <div class="col-span-3 bg-cardBg border border-borderCol rounded-lg flex flex-col h-full overflow-hidden">
+            <div class="p-2.5 border-b border-borderCol bg-cardHeader flex items-center justify-between shrink-0">
+                <span class="font-bold text-xs uppercase tracking-wider text-slate-200 flex items-center space-x-1">
+                    <span>📄 SEC EDGAR FILINGS</span>
+                </span>
+                <span class="text-[10px] bg-darkBg text-textMuted px-2 py-0.5 rounded border border-borderCol">Direct Links Active</span>
+            </div>
+
+            <!-- Filing Form Filter Tags -->
+            <div class="p-2 border-b border-borderCol bg-darkBg flex flex-wrap gap-1 text-[11px] shrink-0">
+                <button onclick="filterFilingForm('ALL')" class="form-btn bg-accentBlue text-white px-2 py-0.5 rounded">ALL</button>
+                <button onclick="filterFilingForm('10-K/Q')" class="form-btn bg-cardBg hover:bg-borderCol text-textMuted px-2 py-0.5 rounded border border-borderCol">10-K/Q</button>
+                <button onclick="filterFilingForm('8-K')" class="form-btn bg-cardBg hover:bg-borderCol text-textMuted px-2 py-0.5 rounded border border-borderCol">8-K</button>
+                <button onclick="filterFilingForm('Form 4')" class="form-btn bg-cardBg hover:bg-borderCol text-textMuted px-2 py-0.5 rounded border border-borderCol">Form 4</button>
+                <button onclick="filterFilingForm('144')" class="form-btn bg-cardBg hover:bg-borderCol text-textMuted px-2 py-0.5 rounded border border-borderCol">144</button>
+                <button onclick="filterFilingForm('S-3')" class="form-btn bg-cardBg hover:bg-borderCol text-textMuted px-2 py-0.5 rounded border border-borderCol">S-3</button>
+                <button onclick="filterFilingForm('424B2')" class="form-btn bg-cardBg hover:bg-borderCol text-textMuted px-2 py-0.5 rounded border border-borderCol">424B2</button>
+                <button onclick="filterFilingForm('Legal')" class="form-btn bg-cardBg hover:bg-borderCol text-textMuted px-2 py-0.5 rounded border border-borderCol">Legal</button>
+            </div>
+
+            <!-- Filings Feed List -->
+            <div class="flex-1 overflow-y-auto p-2 space-y-2" id="filingsContainer">
+
+                <div class="filing-item TSLA Form 4 bg-darkBg border border-borderCol hover:border-accentBlue p-2.5 rounded transition">
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">TSLA</span>
+                            <span class="bg-amber-500/20 text-amber-400 text-[10px] font-bold px-1.5 py-0.2 rounded">Form 4</span>
+                        </div>
+                        <span class="text-[10px] text-textMuted">2026-10-08</span>
+                    </div>
+                    <p class="text-xs text-slate-200 font-medium mb-1">Statement of Changes in Beneficial Ownership (Musk Elon)</p>
+                    <div class="flex justify-between items-center text-[10px] text-textMuted">
+                        <span>Acc #: 0001318685-26-000091</span>
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0001318605" target="_blank" rel="noopener noreferrer" class="text-accentBlue hover:underline font-semibold">Inspect SEC HTML →</a>
+                    </div>
+                </div>
+
+                <div class="filing-item TSLA 10-K/Q bg-darkBg border border-borderCol hover:border-accentBlue p-2.5 rounded transition">
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">TSLA</span>
+                            <span class="bg-accentBlue/20 text-accentBlue text-[10px] font-bold px-1.5 py-0.2 rounded">10-Q</span>
+                        </div>
+                        <span class="text-[10px] text-textMuted">2026-10-18</span>
+                    </div>
+                    <p class="text-xs text-slate-200 font-medium mb-1">Quarterly Report ending Sep 30, 2026</p>
+                    <div class="flex flex-wrap gap-2 text-[10px] mt-1 mb-1.5">
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0001318605" target="_blank" rel="noopener noreferrer" class="text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 hover:underline">⚠️ Risk Factors (Item 1A)</a>
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0001318605" target="_blank" rel="noopener noreferrer" class="text-purple-300 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20 hover:underline">📑 Notes to Financials</a>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] text-textMuted">
+                        <span>Acc #: 0001318685-26-000042</span>
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0001318605" target="_blank" rel="noopener noreferrer" class="text-accentBlue hover:underline font-semibold">Inspect SEC HTML →</a>
+                    </div>
+                </div>
+
+                <div class="filing-item HIMS 10-K/Q bg-darkBg border border-borderCol hover:border-accentBlue p-2.5 rounded transition">
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">HIMS</span>
+                            <span class="bg-accentBlue/20 text-accentBlue text-[10px] font-bold px-1.5 py-0.2 rounded">10-Q</span>
+                        </div>
+                        <span class="text-[10px] text-textMuted">2026-10-15</span>
+                    </div>
+                    <p class="text-xs text-slate-200 font-medium mb-1">Quarterly Report for Period Ended June 30</p>
+                    <div class="flex flex-wrap gap-2 text-[10px] mt-1 mb-1.5">
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0001773751" target="_blank" rel="noopener noreferrer" class="text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 hover:underline">⚠️ Risk Factors</a>
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0001773751" target="_blank" rel="noopener noreferrer" class="text-purple-300 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20 hover:underline">📑 Financial Notes</a>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] text-textMuted">
+                        <span>Acc #: 0001773751-26-000019</span>
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0001773751" target="_blank" rel="noopener noreferrer" class="text-accentBlue hover:underline font-semibold">Inspect SEC HTML →</a>
+                    </div>
+                </div>
+
+                <div class="filing-item BB 10-K/Q bg-darkBg border border-borderCol hover:border-accentBlue p-2.5 rounded transition">
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">BB</span>
+                            <span class="bg-accentBlue/20 text-accentBlue text-[10px] font-bold px-1.5 py-0.2 rounded">10-Q</span>
+                        </div>
+                        <span class="text-[10px] text-textMuted">2026-10-01</span>
+                    </div>
+                    <p class="text-xs text-slate-200 font-medium mb-1">Quarterly Report: QNX Software & Cybersecurity</p>
+                    <div class="flex flex-wrap gap-2 text-[10px] mt-1 mb-1.5">
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0001070235" target="_blank" rel="noopener noreferrer" class="text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 hover:underline">⚠️ Risk Factors</a>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] text-textMuted">
+                        <span>Acc #: 0001070235-26-000014</span>
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0001070235" target="_blank" rel="noopener noreferrer" class="text-accentBlue hover:underline font-semibold">Inspect SEC HTML →</a>
+                    </div>
+                </div>
+
+                <div class="filing-item CRWV S-3 bg-darkBg border border-borderCol hover:border-accentBlue p-2.5 rounded transition">
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">CRWV</span>
+                            <span class="bg-purple-500/20 text-purple-400 text-[10px] font-bold px-1.5 py-0.2 rounded">S-3</span>
+                        </div>
+                        <span class="text-[10px] text-textMuted">2026-10-12</span>
+                    </div>
+                    <p class="text-xs text-slate-200 font-medium mb-1">Registration Statement for Shelf Offering ($1.5B)</p>
+                    <div class="flex justify-between items-center text-[10px] text-textMuted">
+                        <span>Acc #: 0001984210-26-000088</span>
+                        <a href="https://www.sec.gov/edgar/searchedgar/companysearch" target="_blank" rel="noopener noreferrer" class="text-accentBlue hover:underline font-semibold">Inspect SEC HTML →</a>
+                    </div>
+                </div>
+
+                <div class="filing-item RKLB 8-K bg-darkBg border border-borderCol hover:border-accentBlue p-2.5 rounded transition">
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">RKLB</span>
+                            <span class="bg-accentGreen/20 text-accentGreen text-[10px] font-bold px-1.5 py-0.2 rounded">8-K</span>
+                        </div>
+                        <span class="text-[10px] text-textMuted">2026-10-10</span>
+                    </div>
+                    <p class="text-xs text-slate-200 font-medium mb-1">Material Agreement: U.S. Space Force Contract ($515M)</p>
+                    <div class="flex justify-between items-center text-[10px] text-textMuted">
+                        <span>Acc #: 0001819974-26-000031</span>
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0001819994" target="_blank" rel="noopener noreferrer" class="text-accentBlue hover:underline font-semibold">Inspect SEC HTML →</a>
+                    </div>
+                </div>
+
+                <div class="filing-item AMD 10-K/Q bg-darkBg border border-borderCol hover:border-accentBlue p-2.5 rounded transition">
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">AMD</span>
+                            <span class="bg-accentBlue/20 text-accentBlue text-[10px] font-bold px-1.5 py-0.2 rounded">10-Q</span>
+                        </div>
+                        <span class="text-[10px] text-textMuted">2026-10-05</span>
+                    </div>
+                    <p class="text-xs text-slate-200 font-medium mb-1">Quarterly Report: Data Center GPU Expansion</p>
+                    <div class="flex flex-wrap gap-2 text-[10px] mt-1 mb-1.5">
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0000002488" target="_blank" rel="noopener noreferrer" class="text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 hover:underline">⚠️ Risk Factors</a>
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0000002488" target="_blank" rel="noopener noreferrer" class="text-purple-300 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20 hover:underline">📑 Financial Notes</a>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] text-textMuted">
+                        <span>Acc #: 0000002488-26-000064</span>
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0000002488" target="_blank" rel="noopener noreferrer" class="text-accentBlue hover:underline font-semibold">Inspect SEC HTML →</a>
+                    </div>
+                </div>
+
+                <div class="filing-item NEBIUS 8-K bg-darkBg border border-borderCol hover:border-accentBlue p-2.5 rounded transition">
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">NEBIUS</span>
+                            <span class="bg-accentGreen/20 text-accentGreen text-[10px] font-bold px-1.5 py-0.2 rounded">8-K</span>
+                        </div>
+                        <span class="text-[10px] text-textMuted">2026-09-28</span>
+                    </div>
+                    <p class="text-xs text-slate-200 font-medium mb-1">Entry into Material Definitive GPU Supply Agreement</p>
+                    <div class="flex justify-between items-center text-[10px] text-textMuted">
+                        <span>Acc #: 0001513845-26-000012</span>
+                        <a href="https://www.sec.gov/edgar/browse/?CIK=0001513845" target="_blank" rel="noopener noreferrer" class="text-accentBlue hover:underline font-semibold">Inspect SEC HTML →</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- PANEL 2: 10-K/10-Q FUNDAMENTAL METRICS & MD&A DASHBOARD (CENTER) -->
+        <div class="col-span-5 flex flex-col space-y-2 overflow-y-auto pr-1">
+
+            <!-- Card 1: Full-Width Stretched Revenue Growth Rate Chart (Matched to Pic 2) & Gross Margin -->
+            <div class="bg-cardBg border border-borderCol rounded-lg p-3">
+                <div class="flex items-center justify-between mb-3 border-b border-borderCol pb-2">
+                    <span class="font-bold text-xs text-slate-200 uppercase tracking-wider flex items-center space-x-1">
+                        <span class="text-accentGreen">📊</span>
+                        <span>10-K / 10-Q FUNDAMENTAL METRICS & MD&A</span>
+                    </span>
+                    <span class="text-[10px] text-textMuted">Asset Scope: <span class="text-accentBlue font-bold" id="centerAssetScope">ALL TARGETS</span></span>
+                </div>
+
+                <!-- TOP ROW: Full-Width Stretched Revenue Growth Chart Panel (Pic 2 Layout) -->
+                <div class="bg-darkBg p-3 rounded border border-borderCol mb-3">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-bold text-slate-300 uppercase tracking-wide">REVENUE GROWTH RATE</span>
+                        <span class="text-accentGreen text-xs font-bold bg-accentGreen/10 px-2 py-0.5 rounded border border-accentGreen/20" id="centerRevGrowthTag">YoY & QoQ</span>
+                    </div>
+                    <div class="text-2xl font-black text-accentGreen mb-2 flex items-baseline space-x-2" id="centerRevGrowthVal">
+                        <span>+24.8%</span>
+                        <span class="text-xs font-normal text-textMuted" id="centerRevGrowthSub">(Avg Across Coverage)</span>
+                    </div>
+
+                    <!-- Stretched Full-Width Chart Canvas Container with Y-Axis Values & Shaded Fill Area -->
+                    <div class="w-full relative pt-1 pb-1">
+                        <!-- Y-Axis Ticks Legend (25, 20, 15) -->
+                        <div class="absolute left-1 top-0 bottom-6 flex flex-col justify-between text-[10px] text-textMuted font-mono z-10 pointer-events-none">
+                            <span id="yTickTop">25</span>
+                            <span id="yTickMid">20</span>
+                            <span id="yTickBot">15</span>
+                        </div>
+
+                        <!-- SVG Curve Graph with Grid & Semi-Transparent Area Fill -->
+                        <div class="w-full h-24 pl-6 pr-2">
+                            <svg class="w-full h-full overflow-visible" viewBox="0 0 320 70" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="greenFillGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#238636" stop-opacity="0.35"/>
+                                        <stop offset="100%" stop-color="#238636" stop-opacity="0.02"/>
+                                    </linearGradient>
+                                </defs>
+
+                                <!-- Grid Lines -->
+                                <line x1="0" y1="10" x2="320" y2="10" stroke="#21262d" stroke-width="1"/>
+                                <line x1="0" y1="35" x2="320" y2="35" stroke="#21262d" stroke-dasharray="3 3" stroke-width="1"/>
+                                <line x1="0" y1="60" x2="320" y2="60" stroke="#21262d" stroke-width="1"/>
+
+                                <!-- Shaded Area Under Curve -->
+                                <path id="svgFillArea" d="M 10 52 C 80 44, 160 30, 240 28 L 310 32 L 310 60 L 10 60 Z" fill="url(#greenFillGradient)"/>
+
+                                <!-- Bright Stretched Green Curve Line -->
+                                <path id="svgCurvePath" d="M 10 52 C 80 44, 160 30, 240 28 L 310 32" fill="none" stroke="#238636" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                <!-- Point Markers with Outer Rings -->
+                                <circle id="svgPt0" cx="10" cy="52" r="3.5" fill="#238636" stroke="#0d1117" stroke-width="1.5"/>
+                                <circle id="svgPt1" cx="110" cy="40" r="3.5" fill="#238636" stroke="#0d1117" stroke-width="1.5"/>
+                                <circle id="svgPt2" cx="210" cy="28" r="3.5" fill="#238636" stroke="#0d1117" stroke-width="1.5"/>
+                                <circle id="svgPt3" cx="310" cy="32" r="4" fill="#238636" stroke="#0d1117" stroke-width="1.5"/>
+                            </svg>
+                        </div>
+
+                        <!-- Quarter Axis Labels Below Chart -->
+                        <div class="flex justify-between pl-6 pr-2 text-[11px] text-textMuted font-semibold mt-1">
+                            <span>Q1</span>
+                            <span>Q2</span>
+                            <span>Q3</span>
+                            <span>Q4 (E)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gross Margin Block -->
+                <div class="bg-darkBg p-2.5 rounded border border-borderCol mb-3">
+                    <div class="flex justify-between items-center text-[10px] text-textMuted mb-1">
+                        <span class="font-bold text-slate-300 uppercase">GROSS MARGIN (%)</span>
+                        <span class="text-slate-300">Trailing 12M</span>
+                    </div>
+                    <div class="text-xl font-bold text-white mb-1" id="centerGrossMarginVal">54.2% <span class="text-[11px] text-textMuted font-normal" id="centerGrossMarginSub">Weighted Avg</span></div>
+                    <div class="w-full bg-borderCol h-2 rounded-full overflow-hidden flex my-2">
+                        <div class="bg-accentBlue h-full transition-all duration-300" id="centerGrossMarginBar" style="width: 54%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-textMuted mt-1" id="centerGrossMarginRange">
+                        <span>High (HIMS / 81.4%)</span>
+                        <span>Low (RKLB / 29.3%)</span>
+                    </div>
+                </div>
+
+                <!-- Operating Expenses Breakdown -->
+                <div class="bg-darkBg p-2.5 rounded border border-borderCol mb-3">
+                    <div class="text-[10px] text-textMuted font-semibold mb-2 uppercase">OPERATING EXPENSES BREAKDOWN (SG&A, R&D, MARKETING)</div>
+                    <div class="space-y-2 text-xs">
+                        <div>
+                            <div class="flex justify-between text-[11px] mb-0.5">
+                                <span class="text-slate-300">R&D (Research & Dev)</span>
+                                <span class="font-mono text-white" id="centerRdVal">$4.12B</span>
+                            </div>
+                            <div class="w-full bg-borderCol h-1.5 rounded-full overflow-hidden"><div class="bg-accentBlue h-full transition-all duration-300" id="centerRdBar" style="width: 65%"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[11px] mb-0.5">
+                                <span class="text-slate-300">SG&A (Selling, Gen & Admin)</span>
+                                <span class="font-mono text-white" id="centerSgaVal">$2.85B</span>
+                            </div>
+                            <div class="w-full bg-borderCol h-1.5 rounded-full overflow-hidden"><div class="bg-purple-500 h-full transition-all duration-300" id="centerSgaBar" style="width: 45%"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[11px] mb-0.5">
+                                <span class="text-slate-300">Sales & Marketing (S&M)</span>
+                                <span class="font-mono text-white" id="centerSmVal">$1.94B</span>
+                            </div>
+                            <div class="w-full bg-borderCol h-1.5 rounded-full overflow-hidden"><div class="bg-amber-500 h-full transition-all duration-300" id="centerSmBar" style="width: 30%"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Debt vs Deferred Revenue Card -->
+                <div class="bg-darkBg p-2.5 rounded border border-borderCol">
+                    <div class="flex justify-between items-center text-[10px] text-textMuted font-semibold mb-2">
+                        <span class="uppercase">TOTAL DEBT VS DEFERRED REVENUE</span>
+                        <span class="text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">Solvency Ratio</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+                        <div class="p-1.5 bg-cardBg rounded">
+                            <span class="text-textMuted text-[10px] block">Total Debt</span>
+                            <span class="font-mono font-bold text-accentRed text-sm" id="centerTotalDebtVal">$9.45B</span>
+                        </div>
+                        <div class="p-1.5 bg-cardBg rounded">
+                            <span class="text-textMuted text-[10px] block">Deferred Revenue</span>
+                            <span class="font-mono font-bold text-accentGreen text-sm" id="centerDefRevVal">$3.18B</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-textMuted">
+                        <span>Coverage Buffer: <span class="text-white font-mono" id="centerBufferVal">33.6%</span></span>
+                        <span>Net Exposure: <span class="text-white font-mono" id="centerNetExposureVal">$6.27B</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Cash Flows & MD&A Subscriber Metrics -->
+            <div class="bg-cardBg border border-borderCol rounded-lg p-3">
+                <div class="text-[10px] text-textMuted font-semibold mb-2 uppercase">CASH FLOW STATEMENT SUMMARY (Q3/Q4 AGGREGATED)</div>
+                <div class="grid grid-cols-3 gap-2 text-center text-xs mb-3">
+                    <div class="bg-darkBg p-2 rounded border border-borderCol">
+                        <span class="text-textMuted text-[10px] block">Operating (OCF)</span>
+                        <span class="font-bold text-accentGreen font-mono text-sm" id="centerOcfVal">+$14.2B</span>
+                    </div>
+                    <div class="bg-darkBg p-2 rounded border border-borderCol">
+                        <span class="text-textMuted text-[10px] block">CapEx</span>
+                        <span class="font-bold text-accentRed font-mono text-sm" id="centerCapexVal">-$5.8B</span>
+                    </div>
+                    <div class="bg-darkBg p-2 rounded border border-borderCol">
+                        <span class="text-textMuted text-[10px] block">Free Cash Flow (FCF)</span>
+                        <span class="font-bold text-accentGreen font-mono text-sm" id="centerFcfVal">+$8.4B</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-borderCol pt-2.5">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-slate-200 flex items-center space-x-1">
+                            <span>👥 MD&A SUBSCRIBER & USER METRICS</span>
+                        </span>
+                        <span class="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded">Management Discussion</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-darkBg p-2 rounded border border-borderCol">
+                            <span class="text-textMuted text-[10px] block">Active Subscribers</span>
+                            <span class="font-bold text-white text-sm" id="centerSubVal">2.05M</span>
+                            <span class="text-[10px] text-accentGreen block" id="centerSubSub">+41% YoY (HIMS)</span>
+                        </div>
+                        <div class="bg-darkBg p-2 rounded border border-borderCol">
+                            <span class="text-textMuted text-[10px] block">MAU / Active Users</span>
+                            <span class="font-bold text-white text-sm" id="centerMauVal">142M</span>
+                            <span class="text-[10px] text-textMuted block" id="centerMauSub">FSD/App Users (TSLA)</span>
+                        </div>
+                        <div class="bg-darkBg p-2 rounded border border-borderCol">
+                            <span class="text-textMuted text-[10px] block">CAC (Customer Acq)</span>
+                            <span class="font-bold text-white text-sm" id="centerCacVal">$74.50</span>
+                            <span class="text-[10px] text-accentGreen block" id="centerCacSub">-8% QoQ Efficiency</span>
+                        </div>
+                        <div class="bg-darkBg p-2 rounded border border-borderCol">
+                            <span class="text-textMuted text-[10px] block">LTV / Retention</span>
+                            <span class="font-bold text-white text-sm" id="centerLtvVal">$890 / 84%</span>
+                            <span class="text-[10px] text-textMuted block" id="centerLtvSub">Net Retention Rate</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- PANEL 3: X / TWITTER LIVE NEWS FEED (RIGHT) -->
+        <div class="col-span-4 bg-cardBg border border-borderCol rounded-lg flex flex-col h-full overflow-hidden">
+            <div class="p-3 border-b border-borderCol shrink-0 bg-cardHeader">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-accentBlue fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        <span class="font-bold text-sm text-white">Market & Executive Feed</span>
+                    </div>
+                    <span class="text-[10px] text-accentGreen font-semibold">● Live Direct Links</span>
+                </div>
+
+                <div class="flex space-x-1 text-xs bg-darkBg p-1 rounded border border-borderCol" id="feedTabs">
+                    <button onclick="filterFeed('all')" id="tab-all" class="flex-1 py-1 rounded bg-accentBlue text-white font-semibold text-center transition">All Feeds</button>
+                    <button onclick="filterFeed('company')" id="tab-company" class="flex-1 py-1 rounded text-textMuted hover:text-white font-semibold text-center transition">Execs & Assets</button>
+                    <button onclick="filterFeed('macro')" id="tab-macro" class="flex-1 py-1 rounded text-textMuted hover:text-white font-semibold text-center transition">Macro & Wire</button>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-2.5 space-y-2.5" id="tweetContainer">
+
+                <div class="feed-item company bg-darkBg border border-borderCol hover:border-accentBlue rounded-lg p-3 transition cursor-pointer" onclick="window.open('https://x.com/nebiusai', '_blank')">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">Nebius AI</span>
+                            <span class="text-textMuted text-[11px]">@nebiusai</span>
+                            <span class="text-accentBlue text-xs">✓</span>
+                        </div>
+                        <span class="text-textMuted text-[10px]">12m ago</span>
+                    </div>
+                    <p class="text-xs text-slate-200 mb-2 leading-relaxed">
+                        We are officially securing a $3.5B financing facility backed by Citi to accelerate our GPU cluster expansion across Europe and North America. $NBIS
+                    </p>
+                    <div class="flex items-center justify-between text-textMuted text-[11px] pt-1 border-t border-borderCol/50">
+                        <span>💬 48</span> <span>🔁 142</span> <span>❤️ 890</span> <span class="text-accentBlue font-semibold hover:underline">Open on X ↗</span>
+                    </div>
+                </div>
+
+                <div class="feed-item company bg-darkBg border border-borderCol hover:border-accentBlue rounded-lg p-3 transition cursor-pointer" onclick="window.open('https://x.com/Peter_J_Beck', '_blank')">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">Peter Beck</span>
+                            <span class="text-textMuted text-[11px]">@Peter_J_Beck</span>
+                            <span class="text-accentBlue text-xs">✓</span>
+                        </div>
+                        <span class="text-textMuted text-[10px]">42m ago</span>
+                    </div>
+                    <p class="text-xs text-slate-200 mb-2 leading-relaxed">
+                        Neutron Archimedes engine hot fire qualification test completed cleanly. Stage 1 structure integration is right on track. Launch pad Virginia ready. $RKLB
+                    </p>
+                    <div class="flex items-center justify-between text-textMuted text-[11px] pt-1 border-t border-borderCol/50">
+                        <span>💬 112</span> <span>🔁 320</span> <span>❤️ 2.4K</span> <span class="text-accentBlue font-semibold hover:underline">Open on X ↗</span>
+                    </div>
+                </div>
+
+                <div class="feed-item company bg-darkBg border border-borderCol hover:border-accentBlue rounded-lg p-3 transition cursor-pointer" onclick="window.open('https://x.com/AndrewDudum', '_blank')">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">Andrew Dudum</span>
+                            <span class="text-textMuted text-[11px]">@AndrewDudum</span>
+                            <span class="text-accentBlue text-xs">✓</span>
+                        </div>
+                        <span class="text-textMuted text-[10px]">1h ago</span>
+                    </div>
+                    <p class="text-xs text-slate-200 mb-2 leading-relaxed">
+                        Personalization + accessibility = long-term subscriber retention. Hims & Hers platform hitting record high compounding growth this quarter. $HIMS
+                    </p>
+                    <div class="flex items-center justify-between text-textMuted text-[11px] pt-1 border-t border-borderCol/50">
+                        <span>💬 29</span> <span>🔁 88</span> <span>❤️ 610</span> <span class="text-accentBlue font-semibold hover:underline">Open on X ↗</span>
+                    </div>
+                </div>
+
+                <div class="feed-item company bg-darkBg border border-borderCol hover:border-accentBlue rounded-lg p-3 transition cursor-pointer" onclick="window.open('https://x.com/coreweave', '_blank')">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">CoreWeave</span>
+                            <span class="text-textMuted text-[11px]">@coreweave</span>
+                            <span class="text-accentBlue text-xs">✓</span>
+                        </div>
+                        <span class="text-textMuted text-[10px]">2h ago</span>
+                    </div>
+                    <p class="text-xs text-slate-200 mb-2 leading-relaxed">
+                        Deploying next-gen liquid cooled NVIDIA HGX systems to serve top tier enterprise LLM workloads. Scaling low latency compute globally. $CRWV
+                    </p>
+                    <div class="flex items-center justify-between text-textMuted text-[11px] pt-1 border-t border-borderCol/50">
+                        <span>💬 34</span> <span>🔁 95</span> <span>❤️ 780</span> <span class="text-accentBlue font-semibold hover:underline">Open on X ↗</span>
+                    </div>
+                </div>
+
+                <div class="feed-item macro bg-darkBg border border-borderCol hover:border-accentBlue rounded-lg p-3 transition cursor-pointer" onclick="window.open('https://x.com/DeitaOne', '_blank')">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-accentRed">DeitaOne (Wire)</span>
+                            <span class="text-textMuted text-[11px]">@DeitaOne</span>
+                            <span class="text-accentBlue text-xs">✓</span>
+                        </div>
+                        <span class="text-textMuted text-[10px]">3h ago</span>
+                    </div>
+                    <p class="text-xs text-slate-200 mb-2 leading-relaxed">
+                        BREAKING: US SEC EDGAR FILING DATA SHOWS INCREASED INSTITUTIONAL ACCUMULATION IN AI INFRASTRUCTURE EQUITIES LAST QUARTER.
+                    </p>
+                    <div class="flex items-center justify-between text-textMuted text-[11px] pt-1 border-t border-borderCol/50">
+                        <span>💬 55</span> <span>🔁 210</span> <span>❤️ 1.1K</span> <span class="text-accentBlue font-semibold hover:underline">Open on X ↗</span>
+                    </div>
+                </div>
+
+                <div class="feed-item macro bg-darkBg border border-borderCol hover:border-accentBlue rounded-lg p-3 transition cursor-pointer" onclick="window.open('https://x.com/charliebilello', '_blank')">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">Charlie Bilello</span>
+                            <span class="text-textMuted text-[11px]">@charliebilello</span>
+                            <span class="text-accentBlue text-xs">✓</span>
+                        </div>
+                        <span class="text-textMuted text-[10px]">4h ago</span>
+                    </div>
+                    <p class="text-xs text-slate-200 mb-2 leading-relaxed">
+                        The gap between top AI datacenter CAPEX spenders and legacy enterprise tech is now at the widest point in modern market history.
+                    </p>
+                    <div class="flex items-center justify-between text-textMuted text-[11px] pt-1 border-t border-borderCol/50">
+                        <span>💬 89</span> <span>🔁 310</span> <span>❤️ 1.9K</span> <span class="text-accentBlue font-semibold hover:underline">Open on X ↗</span>
+                    </div>
+                </div>
+
+                <div class="feed-item macro bg-darkBg border border-borderCol hover:border-accentBlue rounded-lg p-3 transition cursor-pointer" onclick="window.open('https://x.com/NickTimiraos', '_blank')">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">Nick Timiraos</span>
+                            <span class="text-textMuted text-[11px]">@NickTimiraos</span>
+                            <span class="text-accentBlue text-xs">✓</span>
+                        </div>
+                        <span class="text-textMuted text-[10px]">5h ago</span>
+                    </div>
+                    <p class="text-xs text-slate-200 mb-2 leading-relaxed">
+                        Federal Reserve economic analysis updates: Productivity gains linked to tech automation & hardware investments helping offset elevated debt capital costs.
+                    </p>
+                    <div class="flex items-center justify-between text-textMuted text-[11px] pt-1 border-t border-borderCol/50">
+                        <span>💬 76</span> <span>🔁 185</span> <span>❤️ 940</span> <span class="text-accentBlue font-semibold hover:underline">Open on X ↗</span>
+                    </div>
+                </div>
+
+                <div class="feed-item macro bg-darkBg border border-borderCol hover:border-accentBlue rounded-lg p-3 transition cursor-pointer" onclick="window.open('https://x.com/KobeissiLetter', '_blank')">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">The Kobeissi Letter</span>
+                            <span class="text-textMuted text-[11px]">@KobeissiLetter</span>
+                            <span class="text-accentBlue text-xs">✓</span>
+                        </div>
+                        <span class="text-textMuted text-[10px]">6h ago</span>
+                    </div>
+                    <p class="text-xs text-slate-200 mb-2 leading-relaxed">
+                        BREAKING: Over 67% of S&P 500 total performance since early 2024 has been driven by a basket of 42 AI & infrastructure names.
+                    </p>
+                    <div class="flex items-center justify-between text-textMuted text-[11px] pt-1 border-t border-borderCol/50">
+                        <span>💬 142</span> <span>🔁 520</span> <span>❤️ 3.1K</span> <span class="text-accentBlue font-semibold hover:underline">Open on X ↗</span>
+                    </div>
+                </div>
+
+                <div class="feed-item macro bg-darkBg border border-borderCol hover:border-accentBlue rounded-lg p-3 transition cursor-pointer" onclick="window.open('https://x.com/TheStalwart', '_blank')">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-xs text-white">Joe Weisenthal</span>
+                            <span class="text-textMuted text-[11px]">@TheStalwart</span>
+                            <span class="text-accentBlue text-xs">✓</span>
+                        </div>
+                        <span class="text-textMuted text-[10px]">7h ago</span>
+                    </div>
+                    <p class="text-xs text-slate-200 mb-2 leading-relaxed">
+                        Fascinating dynamics in the GPU cloud lending space right now. Financing facilities getting structured directly against compute hardware assets.
+                    </p>
+                    <div class="flex items-center justify-between text-textMuted text-[11px] pt-1 border-t border-borderCol/50">
+                        <span>💬 41</span> <span>🔁 92</span> <span>❤️ 670</span> <span class="text-accentBlue font-semibold hover:underline">Open on X ↗</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CLIENT-SIDE DYNAMIC DATA ENGINE -->
+    <script>
+        // Financial Data Dictionary per Asset (With Stretched Path Coordinates)
+        const assetData = {
+            ALL: {
+                scope: "ALL TARGETS",
+                revGrowthVal: "+24.8%",
+                revGrowthSub: "(Avg Across Coverage)",
+                curvePath: "M 10 52 C 80 44, 160 30, 240 28 L 310 32",
+                fillArea: "M 10 52 C 80 44, 160 30, 240 28 L 310 32 L 310 60 L 10 60 Z",
+                pts: [{cx:10, cy:52}, {cx:110, cy:40}, {cx:210, cy:28}, {cx:310, cy:32}],
+                yTicks: {top: "25", mid: "20", bot: "15"},
+                grossMarginVal: "54.2%", grossMarginSub: "Weighted Avg", grossMarginBar: "54%",
+                grossMarginRange: "<span>High (HIMS / 81.4%)</span><span>Low (RKLB / 29.3%)</span>",
+                rdVal: "$4.12B", rdBar: "65%",
+                sgaVal: "$2.85B", sgaBar: "45%",
+                smVal: "$1.94B", smBar: "30%",
+                totalDebt: "$9.45B", defRev: "$3.18B", buffer: "33.6%", netExp: "$6.27B",
+                ocf: "+$14.2B", capex: "-$5.8B", fcf: "+$8.4B",
+                subVal: "2.05M", subSub: "+41% YoY (HIMS)",
+                mauVal: "142M", mauSub: "FSD/App Users (TSLA)",
+                cacVal: "$74.50", cacSub: "-8% QoQ Efficiency",
+                ltvVal: "$890 / 84%", ltvSub: "Net Retention Rate"
+            },
+            TSLA: {
+                scope: "TESLA, INC.",
+                revGrowthVal: "+7.8%",
+                revGrowthSub: "Q3 YoY Growth",
+                curvePath: "M 10 45 C 80 50, 160 32, 240 22 L 310 18",
+                fillArea: "M 10 45 C 80 50, 160 32, 240 22 L 310 18 L 310 60 L 10 60 Z",
+                pts: [{cx:10, cy:45}, {cx:110, cy:48}, {cx:210, cy:22}, {cx:310, cy:18}],
+                yTicks: {top: "15%", mid: "10%", bot: "5%"},
+                grossMarginVal: "19.8%", grossMarginSub: "Automotive & Energy", grossMarginBar: "20%",
+                grossMarginRange: "<span>Energy Storage: 30.5%</span><span>Auto: 17.1%</span>",
+                rdVal: "$1.15B", rdBar: "55%", sgaVal: "$1.28B", sgaBar: "60%", smVal: "$240M", smBar: "15%",
+                totalDebt: "$5.41B", defRev: "$2.85B", buffer: "52.6%", netExp: "$2.56B",
+                ocf: "+$6.2B", capex: "-$3.5B", fcf: "+$2.7B",
+                subVal: "1.45M", subSub: "FSD Active Subs",
+                mauVal: "142M", mauSub: "Tesla Mobile App Users",
+                cacVal: "$0.00", cacSub: "Organic / Referral Driven",
+                ltvVal: "$45,000 / 92%", ltvSub: "Vehicle + Ecosystem LTV"
+            },
+            HIMS: {
+                scope: "HIMS & HERS HEALTH",
+                revGrowthVal: "+52.0%",
+                revGrowthSub: "YoY Compound Growth",
+                curvePath: "M 10 55 C 80 38, 160 22, 240 12 L 310 6",
+                fillArea: "M 10 55 C 80 38, 160 22, 240 12 L 310 6 L 310 60 L 10 60 Z",
+                pts: [{cx:10, cy:55}, {cx:110, cy:38}, {cx:210, cy:12}, {cx:310, cy:6}],
+                yTicks: {top: "60%", mid: "40%", bot: "20%"},
+                grossMarginVal: "81.4%", grossMarginSub: "Telehealth Subscriptions", grossMarginBar: "81%",
+                grossMarginRange: "<span>Personalized Care: 83%</span><span>Wholesale: 72%</span>",
+                rdVal: "$18.5M", rdBar: "15%", sgaVal: "$45.2M", sgaBar: "35%", smVal: "$148.0M", smBar: "85%",
+                totalDebt: "$0.00", defRev: "$42.5M", buffer: "100%", netExp: "$0.00",
+                ocf: "+$112M", capex: "-$27M", fcf: "+$85M",
+                subVal: "2.05M", subSub: "+41% YoY High Margin",
+                mauVal: "4.8M", mauSub: "Monthly Platform Visits",
+                cacVal: "$74.50", cacSub: "-8% QoQ Efficiency",
+                ltvVal: "$890 / 84%", ltvSub: "Net Retention Rate"
+            },
+            BB: {
+                scope: "BLACKBERRY LIMITED",
+                revGrowthVal: "-2.4%",
+                revGrowthSub: "IoT vs Cyber Split",
+                curvePath: "M 10 18 C 80 28, 160 38, 240 48 L 310 56",
+                fillArea: "M 10 18 C 80 28, 160 38, 240 48 L 310 56 L 310 60 L 10 60 Z",
+                pts: [{cx:10, cy:18}, {cx:110, cy:28}, {cx:210, cy:48}, {cx:310, cy:56}],
+                yTicks: {top: "+5%", mid: "0%", bot: "-5%"},
+                grossMarginVal: "68.5%", grossMarginSub: "QNX Embedded OS", grossMarginBar: "68%",
+                grossMarginRange: "<span>IoT QNX: 81%</span><span>Cybersecurity: 54%</span>",
+                rdVal: "$42M", rdBar: "40%", sgaVal: "$58M", sgaBar: "55%", smVal: "$32M", smBar: "30%",
+                totalDebt: "$365M", defRev: "$110M", buffer: "30.1%", netExp: "$255M",
+                ocf: "+$18M", capex: "-$6M", fcf: "+$12M",
+                subVal: "235M", subSub: "Vehicles with QNX OS",
+                mauVal: "45M", mauSub: "Secured Endpoints",
+                cacVal: "$12,400", cacSub: "Enterprise Cyber CAC",
+                ltvVal: "$180K / 88%", ltvSub: "Automotive OEM Contract LTV"
+            },
+            CRWV: {
+                scope: "COREWEAVE CLOUD",
+                revGrowthVal: "+210%",
+                revGrowthSub: "Hyperscaler Scale",
+                curvePath: "M 10 58 C 80 40, 160 18, 240 8 L 310 4",
+                fillArea: "M 10 58 C 80 40, 160 18, 240 8 L 310 4 L 310 60 L 10 60 Z",
+                pts: [{cx:10, cy:58}, {cx:110, cy:40}, {cx:210, cy:18}, {cx:310, cy:4}],
+                yTicks: {top: "250%", mid: "150%", bot: "50%"},
+                grossMarginVal: "55.0%", grossMarginSub: "GPU Cloud Infrastructure", grossMarginBar: "55%",
+                grossMarginRange: "<span>NVIDIA H100/H200: 58%</span><span>Storage: 42%</span>",
+                rdVal: "$85M", rdBar: "25%", sgaVal: "$210M", sgaBar: "60%", smVal: "$45M", smBar: "20%",
+                totalDebt: "$7.50B", defRev: "$1.20B", buffer: "16.0%", netExp: "$6.30B",
+                ocf: "+$420M", capex: "-$2.8B", fcf: "-$2.38B",
+                subVal: "140", subSub: "Enterprise LLM Clients",
+                mauVal: "280K", mauSub: "Active GPU Instances",
+                cacVal: "$185K", cacSub: "Hyperscaler Sales Cycle",
+                ltvVal: "$14.2M / 96%", ltvSub: "Multi-year GPU Cluster Leases"
+            },
+            RKLB: {
+                scope: "ROCKET LAB USA",
+                revGrowthVal: "+71.2%",
+                revGrowthSub: "Electron + Space Systems",
+                curvePath: "M 10 50 C 80 34, 160 22, 240 14 L 310 8",
+                fillArea: "M 10 50 C 80 34, 160 22, 240 14 L 310 8 L 310 60 L 10 60 Z",
+                pts: [{cx:10, cy:50}, {cx:110, cy:34}, {cx:210, cy:22}, {cx:310, cy:8}],
+                yTicks: {top: "80%", mid: "50%", bot: "20%"},
+                grossMarginVal: "29.3%", grossMarginSub: "Space Systems Lead", grossMarginBar: "29%",
+                grossMarginRange: "<span>Space Systems: 36%</span><span>Launch: 12%</span>",
+                rdVal: "$38M", rdBar: "45%", sgaVal: "$45M", sgaBar: "50%", smVal: "$8M", smBar: "10%",
+                totalDebt: "$355M", defRev: "$85M", buffer: "23.9%", netExp: "$270M",
+                ocf: "+$12M", capex: "-$44M", fcf: "-$32M",
+                subVal: "16", subSub: "Electron Launch Backlog",
+                mauVal: "$1.06B", mauSub: "Total Order Backlog",
+                cacVal: "$450K", cacSub: "Government / Commercial Bid",
+                ltvVal: "$8.2M / 90%", ltvSub: "Average Mission LTV"
+            },
+            AMD: {
+                scope: "ADVANCED MICRO DEVICES",
+                revGrowthVal: "+18.4%",
+                revGrowthSub: "Data Center MI300 Accelerators",
+                curvePath: "M 10 48 C 80 38, 160 22, 240 16 L 310 12",
+                fillArea: "M 10 48 C 80 38, 160 22, 240 16 L 310 12 L 310 60 L 10 60 Z",
+                pts: [{cx:10, cy:48}, {cx:110, cy:38}, {cx:210, cy:22}, {cx:310, cy:12}],
+                yTicks: {top: "25%", mid: "15%", bot: "5%"},
+                grossMarginVal: "52.4%", grossMarginSub: "Non-GAAP Silicon Margin", grossMarginBar: "52%",
+                grossMarginRange: "<span>Data Center: 62%</span><span>Gaming: 38%</span>",
+                rdVal: "$1.52B", rdBar: "70%", sgaVal: "$620M", sgaBar: "28%", smVal: "$280M", smBar: "12%",
+                totalDebt: "$2.46B", defRev: "$480M", buffer: "19.5%", netExp: "$1.98B",
+                ocf: "+$1.42B", capex: "-$310M", fcf: "+$1.11B",
+                subVal: "45%", subSub: "Server CPU Market Share",
+                mauVal: "350M+", mauSub: "Ryzen / EPYC / Instinct Chips",
+                cacVal: "N/A", cacSub: "OEM Channel Distribution",
+                ltvVal: "Enterprise", ltvSub: "Hyperscaler Compute Standard"
+            },
+            NEBIUS: {
+                scope: "NEBIUS GROUP",
+                revGrowthVal: "+372%",
+                revGrowthSub: "AI Cloud Deployment",
+                curvePath: "M 10 56 C 80 35, 160 12, 240 8 L 310 4",
+                fillArea: "M 10 56 C 80 35, 160 12, 240 8 L 310 4 L 310 60 L 10 60 Z",
+                pts: [{cx:10, cy:56}, {cx:110, cy:35}, {cx:210, cy:12}, {cx:310, cy:4}],
+                yTicks: {top: "400%", mid: "200%", bot: "50%"},
+                grossMarginVal: "48.5%", grossMarginSub: "GPU Compute Provisioning", grossMarginBar: "48%",
+                grossMarginRange: "<span>Rubin Clusters: 52%</span><span>Services: 35%</span>",
+                rdVal: "$88M", rdBar: "38%", sgaVal: "$142M", sgaBar: "62%", smVal: "$28M", smBar: "12%",
+                totalDebt: "$3.50B", defRev: "$410M", buffer: "11.7%", netExp: "$3.09B",
+                ocf: "-$85M", capex: "-$135M", fcf: "-$220M",
+                subVal: "1GW", subSub: "Target Compute Capacity",
+                mauVal: "65K", mauSub: "Active Developer Accounts",
+                cacVal: "$42K", cacSub: "Enterprise Cloud CAC",
+                ltvVal: "$2.8M / 94%", ltvSub: "Multi-year GPU Allocation LTV"
+            },
+            BTC: {
+                scope: "BITCOIN NETWORK INDEX",
+                revGrowthVal: "+112%",
+                revGrowthSub: "Network Hashrate YoY",
+                curvePath: "M 10 52 C 80 32, 160 20, 240 10 L 310 5",
+                fillArea: "M 10 52 C 80 32, 160 20, 240 10 L 310 5 L 310 60 L 10 60 Z",
+                pts: [{cx:10, cy:52}, {cx:110, cy:32}, {cx:210, cy:20}, {cx:310, cy:5}],
+                yTicks: {top: "150%", mid: "100%", bot: "50%"},
+                grossMarginVal: "100%", grossMarginSub: "Decentralized Protocol", grossMarginBar: "100%",
+                grossMarginRange: "<span>Transaction Fees: 12%</span><span>Block Subsidies: 88%</span>",
+                rdVal: "$0.00", rdBar: "0%", sgaVal: "$0.00", sgaBar: "0%", smVal: "$0.00", smBar: "0%",
+                totalDebt: "$0.00", defRev: "$0.00", buffer: "100%", netExp: "$0.00",
+                ocf: "N/A", capex: "N/A", fcf: "N/A",
+                subVal: "19.7M", subSub: "BTC Supply Mined",
+                mauVal: "48M", mauSub: "Active Wallet Addresses",
+                cacVal: "Protocol", cacSub: "Mining Fee Market",
+                ltvVal: "Immutable", ltvSub: "Digital Store of Value"
+            },
+            XYZ100: {
+                scope: "NASDAQ-100 DEX PERP",
+                revGrowthVal: "+14.5%",
+                revGrowthSub: "Index Revenue Composite",
+                curvePath: "M 10 46 C 80 36, 160 24, 240 18 L 310 14",
+                fillArea: "M 10 46 C 80 36, 160 24, 240 18 L 310 14 L 310 60 L 10 60 Z",
+                pts: [{cx:10, cy:46}, {cx:110, cy:36}, {cx:210, cy:24}, {cx:310, cy:14}],
+                yTicks: {top: "20%", mid: "12%", bot: "5%"},
+                grossMarginVal: "58.2%", grossMarginSub: "Composite Tech Margin", grossMarginBar: "58%",
+                grossMarginRange: "<span>Software: 74%</span><span>Hardware: 42%</span>",
+                rdVal: "$12.4B", rdBar: "50%", sgaVal: "$8.2B", sgaBar: "32%", smVal: "$4.1B", smBar: "18%",
+                totalDebt: "$45.2B", defRev: "$18.4B", buffer: "40.7%", netExp: "$26.8B",
+                ocf: "+$32.4B", capex: "-$14.2B", fcf: "+$18.2B",
+                subVal: "100", subSub: "Constituent Tech Equities",
+                mauVal: "1B+", mauSub: "Global User Base",
+                cacVal: "Index", cacSub: "Market Cap Weighted",
+                ltvVal: "Composite", ltvSub: "Benchmark Return LTV"
+            }
+        };
+
+        // Select Asset Function (Updates Left Stream & Center Panel Metrics)
+        function selectAsset(symbol) {
+            const buttons = document.querySelectorAll('.asset-btn');
+            buttons.forEach(btn => {
+                if (btn.id === `asset-btn-${symbol}`) {
+                    btn.className = "asset-btn bg-accentBlue text-white font-bold px-3 py-1 rounded";
+                } else {
+                    btn.className = "asset-btn bg-darkBg hover:bg-borderCol text-textMuted px-2.5 py-1 rounded border border-borderCol";
+                }
+            });
+
+            const filingItems = document.querySelectorAll('.filing-item');
+            filingItems.forEach(item => {
+                if (symbol === 'ALL' || item.classList.contains(symbol)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            const data = assetData[symbol] || assetData['ALL'];
+            
+            document.getElementById('centerAssetScope').innerText = data.scope;
+            document.getElementById('centerRevGrowthVal').innerHTML = `<span>${data.revGrowthVal}</span> <span class="text-xs font-normal text-textMuted" id="centerRevGrowthSub">${data.revGrowthSub}</span>`;
+            
+            // Stretched SVG Curve & Fill Area update
+            document.getElementById('svgCurvePath').setAttribute('d', data.curvePath);
+            document.getElementById('svgFillArea').setAttribute('d', data.fillArea);
+            
+            if (data.yTicks) {
+                document.getElementById('yTickTop').innerText = data.yTicks.top;
+                document.getElementById('yTickMid').innerText = data.yTicks.mid;
+                document.getElementById('yTickBot').innerText = data.yTicks.bot;
+            }
+
+            data.pts.forEach((pt, idx) => {
+                const circle = document.getElementById(`svgPt${idx}`);
+                if (circle) {
+                    circle.setAttribute('cx', pt.cx);
+                    circle.setAttribute('cy', pt.cy);
+                }
+            });
+
+            document.getElementById('centerGrossMarginVal').innerHTML = `${data.grossMarginVal} <span class="text-[11px] text-textMuted font-normal">${data.grossMarginSub}</span>`;
+            document.getElementById('centerGrossMarginBar').style.width = data.grossMarginBar;
+            document.getElementById('centerGrossMarginRange').innerHTML = data.grossMarginRange;
+
+            document.getElementById('centerRdVal').innerText = data.rdVal;
+            document.getElementById('centerRdBar').style.width = data.rdBar;
+            document.getElementById('centerSgaVal').innerText = data.sgaVal;
+            document.getElementById('centerSgaBar').style.width = data.sgaBar;
+            document.getElementById('centerSmVal').innerText = data.smVal;
+            document.getElementById('centerSmBar').style.width = data.smBar;
+
+            document.getElementById('centerTotalDebtVal').innerText = data.totalDebt;
+            document.getElementById('centerDefRevVal').innerText = data.defRev;
+            document.getElementById('centerBufferVal').innerText = data.buffer;
+            document.getElementById('centerNetExposureVal').innerText = data.netExp;
+
+            document.getElementById('centerOcfVal').innerText = data.ocf;
+            document.getElementById('centerCapexVal').innerText = data.capex;
+            document.getElementById('centerFcfVal').innerText = data.fcf;
+
+            document.getElementById('centerSubVal').innerText = data.subVal;
+            document.getElementById('centerSubSub').innerText = data.subSub;
+            document.getElementById('centerMauVal').innerText = data.mauVal;
+            document.getElementById('centerMauSub').innerText = data.mauSub;
+            document.getElementById('centerCacVal').innerText = data.cacVal;
+            document.getElementById('centerCacSub').innerText = data.cacSub;
+            document.getElementById('centerLtvVal').innerText = data.ltvVal;
+            document.getElementById('centerLtvSub').innerText = data.ltvSub;
+        }
+
+        function filterFilingForm(formType) {
+            const filingItems = document.querySelectorAll('.filing-item');
+            const formBtns = document.querySelectorAll('.form-btn');
+
+            formBtns.forEach(btn => {
+                if (btn.innerText === formType) {
+                    btn.className = "form-btn bg-accentBlue text-white px-2 py-0.5 rounded font-bold";
+                } else {
+                    btn.className = "form-btn bg-cardBg hover:bg-borderCol text-textMuted px-2 py-0.5 rounded border border-borderCol";
+                }
+            });
+
+            filingItems.forEach(item => {
+                if (formType === 'ALL' || item.classList.contains(formType)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function filterFeed(category) {
+            const items = document.querySelectorAll('.feed-item');
+            const tabAll = document.getElementById('tab-all');
+            const tabCompany = document.getElementById('tab-company');
+            const tabMacro = document.getElementById('tab-macro');
+
+            [tabAll, tabCompany, tabMacro].forEach(tab => {
+                tab.className = "flex-1 py-1 rounded text-textMuted hover:text-white font-semibold text-center transition";
+            });
+
+            if (category === 'all') {
+                tabAll.className = "flex-1 py-1 rounded bg-accentBlue text-white font-semibold text-center transition";
+                items.forEach(item => item.style.display = 'block');
+            } else if (category === 'company') {
+                tabCompany.className = "flex-1 py-1 rounded bg-accentBlue text-white font-semibold text-center transition";
+                items.forEach(item => {
+                    if (item.classList.contains('company')) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            } else if (category === 'macro') {
+                tabMacro.className = "flex-1 py-1 rounded bg-accentBlue text-white font-semibold text-center transition";
+                items.forEach(item => {
+                    if (item.classList.contains('macro')) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
